@@ -23,17 +23,15 @@ int main(int argc, char *argv[])
 {
 
 	if(argc < 2  || argc > 3){
-		fprintf(stderr, "usage: reverse <input> <output>\r\n");
+		fprintf(stderr, "usage: reverse <input> <output>\n");
 		exit(1);
 	}
-
-	printf("# of args: %d \nname: %s & %s\n", argc, argv[1], argv[2]);
 	
 	FILE *outputFile;
 	if (argc == 3)
 	{
 		if(strcmp(argv[1], argv[2]) == 0){
-			fprintf(stderr, "error: input and output file must differ\r\n");
+			fprintf(stderr, "error: input and output file must differ\n");
 			exit(1);
 		}
 
@@ -41,7 +39,7 @@ int main(int argc, char *argv[])
 
 		if ((outputFile = fopen(argv[2], "w")) == NULL)
 		{
-			fprintf(stderr, "error: cannot open file '%s'\r\n", argv[2]);
+			fprintf(stderr, "error: cannot open file '%s'\n", argv[2]);
 			exit(1);
 		}
 		
@@ -52,7 +50,7 @@ int main(int argc, char *argv[])
 	FILE *file1;
 	if ((file1 = fopen(argv[1], "r")) == NULL)
 	{
-		fprintf(stderr, "error: cannot open file '%s'\r\n", argv[1]);
+		fprintf(stderr, "error: cannot open file '%s'\n", argv[1]);
 		exit(1);
 	}
 
