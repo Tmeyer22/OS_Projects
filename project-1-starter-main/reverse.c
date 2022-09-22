@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 		//Read through the list backwards
 		struct node* cur = tail->next;
 		while(cur->previous != NULL){
-			printf("%s\n", cur->line );
+			printf("%s", cur->line );
 			cur = cur->previous;
 		}
 	}
