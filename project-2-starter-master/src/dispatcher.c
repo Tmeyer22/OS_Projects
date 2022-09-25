@@ -50,6 +50,12 @@ static int dispatch_external_command(struct command *pipeline)
 	 *
 	 * Good luck!
 	 */
+
+	
+	if (strcmp(pipeline->argv[0], "echo") == 1){
+		fprintf(stderr, "%s\n", pipeline->argv[1]);
+	}
+
 	fprintf(stderr, "TODO: handle external commands\n");
 	return -1;
 }
