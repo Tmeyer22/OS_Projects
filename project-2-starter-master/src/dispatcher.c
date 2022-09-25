@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "helper.h" 
 #include "dispatcher.h"
 #include "shell_builtins.h"
 #include "parser.h"
@@ -24,6 +25,7 @@
  * Return: The return status of the last command executed in the
  * pipeline.
  */
+
 static int dispatch_external_command(struct command *pipeline)
 {
 	/*
@@ -51,10 +53,16 @@ static int dispatch_external_command(struct command *pipeline)
 	 * Good luck!
 	 */
 
+
+
+
+
+
+
 	
-	if (strcmp(pipeline->argv[0], "echo") == 1){
+	if (strcmp(pipeline->argv[0], "echo") == 0){
 		//Print
-		fprintf(stderr, "%s\n", pipeline->argv[1]);
+		echo(pipeline);
 	}
 
 	fprintf(stderr, "TODO: handle external commands\n");
