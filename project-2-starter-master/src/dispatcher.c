@@ -53,6 +53,7 @@ static int dispatch_external_command(struct command *pipeline)
 
 	
 	if (strcmp(pipeline->argv[0], "echo") == 1){
+		//Print
 		fprintf(stderr, "%s\n", pipeline->argv[1]);
 	}
 
