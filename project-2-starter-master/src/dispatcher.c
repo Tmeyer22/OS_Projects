@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-#include "helper.h" 
+//#include "helper.h" 
 #include "dispatcher.h"
 #include "shell_builtins.h"
 #include "parser.h"
@@ -60,13 +61,20 @@ static int dispatch_external_command(struct command *pipeline)
 
 
 	
-	if (strcmp(pipeline->argv[0], "echo") == 0){
+	//if (strcmp(pipeline->argv[0], "echo") == 0){
 		//Print
-		echo(pipeline);
-	}
+		//echo(pipeline);	
+	//}
+	//char *mainString = malloc(sizeof(pipeline->argv[0] + 48));
+	char *arg = "/bin/";
+	strcat(arg, pipeline->argv[0]);
+	char *env_args[] = { getenv("PATH"), NULL };
+	execve(arg, pipeline->argv, env_args);
+	return 1;
 
-	fprintf(stderr, "TODO: handle external commands\n");
-	return -1;
+
+	//fprintf(stderr, "TODO: handle external commands\n");
+	//return -1;
 }
 
 /**
