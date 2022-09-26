@@ -65,9 +65,17 @@ static int dispatch_external_command(struct command *pipeline)
 		//Print
 		//echo(pipeline);	
 	//}
-	//char *mainString = malloc(sizeof(pipeline->argv[0] + 48));
-	char *arg = "/bin/";
+
+	char *arg = calloc(sizeof(pipeline->argv[0] + 40), sizeof(char));
+	char *bin = "/bin/";
+	
+	strcat(arg, bin);
+
+
 	strcat(arg, pipeline->argv[0]);
+
+	//fprintf(stderr, "%s", mainString);
+
 	char *env_args[] = { getenv("PATH"), NULL };
 	execve(arg, pipeline->argv, env_args);
 	return 1;
