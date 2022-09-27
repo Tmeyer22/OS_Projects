@@ -54,7 +54,7 @@ static int dispatch_external_command(struct command *pipeline)
 	 *
 	 * Good luck!
 	 */
-	int ex = 0;
+	int return_value = 0;
 
 	if(fork() == 0){
 		//Find command from command object
@@ -65,16 +65,21 @@ static int dispatch_external_command(struct command *pipeline)
 		strcat(arg, pipeline->argv[0]);
 		//Set enviroment path
 		char *env_args[] = { getenv("PATH"), NULL };
-		//Run command
-		execve(arg, pipeline->argv, env_args);
-		exit(0);
+		//Run command and check for success
+		if(execve(arg, pipeline->argv, env_args) == -1){
+			perror("Execve failed.\n");
+			exit(1);
+		};
 	}
 	else {
-		ex = wait(NULL);
+		//Get child process return value
+		int wstatus;
+		waitpid(-1, &wstatus, 0);
+		return_value = WEXITSTATUS(wstatus);
 	}
-
-	fprintf(stderr, "TODO: handle fork + %d\n", ex);
-	return ex;
+	
+	//fprintf(stderr, "TODO: handle fork + %d\n", return_value);
+	return return_value;
 }
 
 /**
