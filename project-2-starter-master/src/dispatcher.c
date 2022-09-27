@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 //#include "helper.h" 
 #include "dispatcher.h"
@@ -53,36 +54,27 @@ static int dispatch_external_command(struct command *pipeline)
 	 *
 	 * Good luck!
 	 */
+	int ex = 0;
 
+	if(fork() == 0){
+		//Find command from command object
+		char *arg = calloc(sizeof(pipeline->argv[0] + 40), sizeof(char));
+		char *bin = "/bin/";
+		//Combine strings to set path
+		strcat(arg, bin);
+		strcat(arg, pipeline->argv[0]);
+		//Set enviroment path
+		char *env_args[] = { getenv("PATH"), NULL };
+		//Run command
+		execve(arg, pipeline->argv, env_args);
+		exit(0);
+	}
+	else {
+		ex = wait(NULL);
+	}
 
-
-
-
-
-
-	
-	//if (strcmp(pipeline->argv[0], "echo") == 0){
-		//Print
-		//echo(pipeline);	
-	//}
-
-	char *arg = calloc(sizeof(pipeline->argv[0] + 40), sizeof(char));
-	char *bin = "/bin/";
-	
-	strcat(arg, bin);
-
-
-	strcat(arg, pipeline->argv[0]);
-
-	//fprintf(stderr, "%s", mainString);
-
-	char *env_args[] = { getenv("PATH"), NULL };
-	execve(arg, pipeline->argv, env_args);
-	return 1;
-
-
-	//fprintf(stderr, "TODO: handle external commands\n");
-	//return -1;
+	fprintf(stderr, "TODO: handle fork + %d\n", ex);
+	return ex;
 }
 
 /**
