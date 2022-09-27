@@ -57,14 +57,21 @@ static int dispatch_external_command(struct command *pipeline)
 	int return_value = 0;
 
 	if(fork() == 0){
-		//Find command from command object
+		//Declare refrences
+		char *comp = "/";
 		char *arg = calloc(sizeof(pipeline->argv[0] + 40), sizeof(char));
-		char *bin = "/bin/";
-		//Combine strings to set path
-		strcat(arg, bin);
-		strcat(arg, pipeline->argv[0]);
-		//Set enviroment path
-		char *env_args[] = { getenv("PATH"), NULL };
+		char *env_args[] = {"/", NULL};
+		//If starts / run with absolute enviroment
+		if(pipeline->argv[0][0] == comp[0]){
+			strcat(arg, pipeline->argv[0]);
+		}else{
+			//Else run with relative enviroment
+			char *bin = "/bin/";
+
+			strcat(arg, bin);
+			strcat(arg, pipeline->argv[0]);
+		}
+
 		//Run command and check for success
 		if(execve(arg, pipeline->argv, env_args) == -1){
 			perror("Execve failed.\n");
