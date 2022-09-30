@@ -58,7 +58,7 @@ static int dispatch_external_command(struct command *pipeline)
 	if(fork() == 0){
 		//Declare refrences
 		char *comp = "/";
-		char *arg = calloc(sizeof(pipeline->argv[0]), sizeof(char)); //TODO:Fix sizeof, returns size of point not of argv
+		char *arg = calloc(sizeof(&pipeline->argv[0]), sizeof(char)); //TODO:Fix sizeof, returns size of point not of argv
 		//TODO: free memory, check mem with shell.debug
 		//Restructure env_args to contain all of getENV(PATH), ar not in bin
 		char *env_args[] = {"/", NULL}; //NULL terminated for execve
