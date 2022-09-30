@@ -55,26 +55,25 @@ static int dispatch_external_command(struct command *pipeline)
 	 * Good luck!
 	 */
 	int return_value = 0;
-
 	if(fork() == 0){
 		//Declare refrences
 		char *comp = "/";
-		char *arg = calloc(sizeof(pipeline->argv[0] + 40), sizeof(char));
+		char *arg = calloc(sizeof(pipeline->argv[0]), sizeof(char));
 		char *env_args[] = {"/", NULL};
 		//If starts / run with absolute enviroment
 		if(pipeline->argv[0][0] == comp[0]){
-			strcat(arg, pipeline->argv[0]);
+			strncat(arg, pipeline->argv[0], sizeof(arg)+sizeof(pipeline->argv[0]));
 		}else{
 			//Else run with relative enviroment
 			char *bin = "/bin/";
 
-			strcat(arg, bin);
-			strcat(arg, pipeline->argv[0]);
+			strncat(arg, bin, sizeof(arg)+sizeof(bin));
+			strncat(arg, pipeline->argv[0], sizeof(arg)+sizeof(pipeline->argv[0]));
 		}
 
 		//Run command and check for success
 		if(execve(arg, pipeline->argv, env_args) == -1){
-			perror("Execve failed.\n");
+			perror("Error Occurred ");
 			exit(1);
 		};
 	}
