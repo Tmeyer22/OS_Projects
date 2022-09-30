@@ -58,23 +58,26 @@ static int dispatch_external_command(struct command *pipeline)
 	if(fork() == 0){
 		//Declare refrences
 		char *comp = "/";
-		char *arg = calloc(sizeof(pipeline->argv[0]), sizeof(char));
-		char *env_args[] = {"/", NULL};
+		char *arg = calloc(sizeof(pipeline->argv[0]), sizeof(char)); //TODO:Fix sizeof, returns size of point not of argv
+		//TODO: free memory, check mem with shell.debug
+		//Restructure env_args to contain all of getENV(PATH), ar not in bin
+		char *env_args[] = {"/", NULL}; //NULL terminated for execve
 		//If starts / run with absolute enviroment
+		//TODO:Remove if else
 		if(pipeline->argv[0][0] == comp[0]){
 			strncat(arg, pipeline->argv[0], sizeof(arg)+sizeof(pipeline->argv[0]));
 		}else{
 			//Else run with relative enviroment
+			//AKA add absolute path to command
 			char *bin = "/bin/";
-
 			strncat(arg, bin, sizeof(arg)+sizeof(bin));
 			strncat(arg, pipeline->argv[0], sizeof(arg)+sizeof(pipeline->argv[0]));
 		}
 
-		//Run command and check for success
+		//Run command and check for failure
 		if(execve(arg, pipeline->argv, env_args) == -1){
-			perror("Error Occurred ");
-			exit(1);
+			perror("Error Occurred");
+			exit(1); //Exit child since execve failed
 		};
 	}
 	else {
@@ -84,7 +87,6 @@ static int dispatch_external_command(struct command *pipeline)
 		return_value = WEXITSTATUS(wstatus);
 	}
 	
-	//fprintf(stderr, "TODO: handle fork + %d\n", return_value);
 	return return_value;
 }
 
