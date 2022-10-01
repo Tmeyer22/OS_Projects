@@ -56,47 +56,41 @@ static int dispatch_external_command(struct command *pipeline)
 	 */
 	int return_value = 0;
 
-		char* path = getenv("PATH");
-		char* token = strtok(path, ":");
-		
-		printf("path: %s \n", path);
-
-
-		int size = 0;
-		//Restructure env_args to contain all of getENV(PATH), ar not in bin
-		while(token != NULL){
-			size += 1;
-			token = strtok(NULL, ":");
-		}
-
-		char *env_args[size + 1]; //NULL terminated for execve
-
-		char* token2 = strtok(path, ":");
-		size = 0;
-		while(token2 != NULL){
-			env_args[size] = token2;
-			size += 1;
-			token2 = strtok(NULL, ":");
-		}
-		printf("size: %d \n", size);
-		env_args[size] = NULL;
-
-
-		for(int i = 0; i < size; ++i){
-			printf("%s \n", env_args[i]);
-		}
-
-
-
-
-
-
 
 	if(fork() == 0){
 		//Declare refrences
 		char *comp = "/";
 		char *arg = calloc(strlen(pipeline->argv[0]), sizeof(char)); //TODO:Fix sizeof, returns size of point not of argv
 		//TODO: free memory, check mem with shell.debug
+
+		char* path = getenv("PATH");
+		char* token;
+    	char* rest = path;
+
+		int tracker = 0;
+		int envSize = 0;
+		while(tracker < strlen(path)){
+			if(path[tracker] == ':'){
+				envSize++;
+			}
+			tracker++;
+		}
+
+		char *env_args[envSize+2];
+
+		int size = 0;
+		while ((token = strtok_r(rest, ":", &rest))){
+			char * temp = calloc(strlen(token), 1);
+			temp = strdup(token);
+			env_args[size] = temp;
+			size++;			
+		}
+
+		env_args[envSize + 1] = NULL;
+
+		// for(int i = 0; i < size; ++i){
+		// 	printf("%s \n", env_args[i]);
+		// }
 
 
 
@@ -113,6 +107,9 @@ static int dispatch_external_command(struct command *pipeline)
 		}
 
 		//Run command and check for failure
+
+		printf("arg: %s", arg);
+		printf("thing: %s", env_args[])
 		if(execve(arg, pipeline->argv, env_args) == -1){
 			perror("Error Occurred");
 			exit(1); //Exit child since execve failed
@@ -126,6 +123,7 @@ static int dispatch_external_command(struct command *pipeline)
 	}
 	
 	return return_value;
+
 }
 
 /**
