@@ -55,13 +55,51 @@ static int dispatch_external_command(struct command *pipeline)
 	 * Good luck!
 	 */
 	int return_value = 0;
+
+		char* path = getenv("PATH");
+		char* token = strtok(path, ":");
+		
+		printf("path: %s \n", path);
+
+
+		int size = 0;
+		//Restructure env_args to contain all of getENV(PATH), ar not in bin
+		while(token != NULL){
+			size += 1;
+			token = strtok(NULL, ":");
+		}
+
+		char *env_args[size + 1]; //NULL terminated for execve
+
+		char* token2 = strtok(path, ":");
+		size = 0;
+		while(token2 != NULL){
+			env_args[size] = token2;
+			size += 1;
+			token2 = strtok(NULL, ":");
+		}
+		printf("size: %d \n", size);
+		env_args[size] = NULL;
+
+
+		for(int i = 0; i < size; ++i){
+			printf("%s \n", env_args[i]);
+		}
+
+
+
+
+
+
+
 	if(fork() == 0){
 		//Declare refrences
 		char *comp = "/";
-		char *arg = calloc(sizeof(&pipeline->argv[0]), sizeof(char)); //TODO:Fix sizeof, returns size of point not of argv
+		char *arg = calloc(strlen(pipeline->argv[0]), sizeof(char)); //TODO:Fix sizeof, returns size of point not of argv
 		//TODO: free memory, check mem with shell.debug
-		//Restructure env_args to contain all of getENV(PATH), ar not in bin
-		char *env_args[] = {"/", NULL}; //NULL terminated for execve
+
+
+
 		//If starts / run with absolute enviroment
 		//TODO:Remove if else
 		if(pipeline->argv[0][0] == comp[0]){
@@ -70,7 +108,7 @@ static int dispatch_external_command(struct command *pipeline)
 			//Else run with relative enviroment
 			//AKA add absolute path to command
 			char *bin = "/bin/";
-			strncat(arg, bin, sizeof(arg)+sizeof(bin));
+			strncat(arg, bin, strlen(arg)+sizeof(bin));
 			strncat(arg, pipeline->argv[0], sizeof(arg)+sizeof(pipeline->argv[0]));
 		}
 
