@@ -88,29 +88,28 @@ static int dispatch_external_command(struct command *pipeline)
 
 		env_args[envSize + 1] = NULL;
 
-		// for(int i = 0; i < size; ++i){
-		// 	printf("%s \n", env_args[i]);
-		// }
-
+		for(int i = 0; i < size; ++i){
+			fprintf(stderr, "%s \n", env_args[i]);
+		}
 
 
 		//If starts / run with absolute enviroment
 		//TODO:Remove if else
 		if(pipeline->argv[0][0] == comp[0]){
-			strncat(arg, pipeline->argv[0], sizeof(arg)+sizeof(pipeline->argv[0]));
+			strncat(arg, pipeline->argv[0], strlen(arg)+strlen(pipeline->argv[0]));
 		}else{
 			//Else run with relative enviroment
 			//AKA add absolute path to command
 			char *bin = "/bin/";
-			strncat(arg, bin, strlen(arg)+sizeof(bin));
-			strncat(arg, pipeline->argv[0], sizeof(arg)+sizeof(pipeline->argv[0]));
+			strncat(arg, bin, strlen(arg)+strlen(bin));
+			strncat(arg, pipeline->argv[0], strlen(arg)+strlen(pipeline->argv[0]));
 		}
 
 		//Run command and check for failure
 
-		printf("arg: %s", arg);
-		printf("thing: %s", env_args[])
-		if(execve(arg, pipeline->argv, env_args) == -1){
+		// fprintf(stderr, "arg:%s\n", arg);
+		// fprintf(stderr, ": %s\n", pipeline->argv[0]);
+		if(execvp(arg, pipeline->argv) == -1){
 			perror("Error Occurred");
 			exit(1); //Exit child since execve failed
 		};
