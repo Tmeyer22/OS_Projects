@@ -30,6 +30,54 @@
 
 static int dispatch_external_command(struct command *pipeline)
 {
+	//STORAGE FOR GARBAGE
+		//Declare refrences
+		// char *comp = "/";
+		// char *arg = calloc(strlen(pipeline->argv[0]), sizeof(char)); //TODO:Fix sizeof, returns size of point not of argv
+		//TODO: free memory, check mem with shell.debug
+
+		// char* path = getenv("PATH");
+		// char* token;
+    	// char* rest = path;
+
+		// int tracker = 0;
+		// int envSize = 0;
+		// while(tracker < strlen(path)){
+		// 	if(path[tracker] == ':'){
+		// 		envSize++;
+		// 	}
+		// 	tracker++;
+		// }
+
+		// char *env_args[envSize+2];
+
+		// int size = 0;
+		// while ((token = strtok_r(rest, ":", &rest))){
+		// 	char * temp = calloc(strlen(token), 1);
+		// 	temp = strdup(token);
+		// 	env_args[size] = temp;
+		// 	size++;			
+		// }
+
+		// env_args[envSize + 1] = NULL;
+
+		//If starts / run with absolute enviroment
+		//TODO:Remove if else
+		// if(pipeline->argv[0][0] == comp[0]){
+		// 	strncat(arg, pipeline->argv[0], strlen(arg)+strlen(pipeline->argv[0]));
+		// }else{
+		// 	//Else run with relative enviroment
+		// 	//AKA add absolute path to command
+		// 	char *bin = "/bin/";
+		// 	strncat(arg, bin, strlen(arg)+strlen(bin));
+		// 	strncat(arg, pipeline->argv[0], strlen(arg)+strlen(pipeline->argv[0]));
+		// }
+
+		//Run command and check for failure
+
+		//fprintf(stderr, "arg:%s\n", arg);
+		//fprintf(stderr, ":%s\n", pipeline->argv[0]);
+
 	/*
 	 * Note: this is where you'll start implementing the project.
 	 *
@@ -54,75 +102,20 @@ static int dispatch_external_command(struct command *pipeline)
 	 *
 	 * Good luck!
 	 */
-	int return_value = 0;
-
+	int wstatus = 0;
 
 	if(fork() == 0){
-		//Declare refrences
-		char *comp = "/";
-		char *arg = calloc(strlen(pipeline->argv[0]), sizeof(char)); //TODO:Fix sizeof, returns size of point not of argv
-		//TODO: free memory, check mem with shell.debug
-
-		char* path = getenv("PATH");
-		char* token;
-    	char* rest = path;
-
-		int tracker = 0;
-		int envSize = 0;
-		while(tracker < strlen(path)){
-			if(path[tracker] == ':'){
-				envSize++;
-			}
-			tracker++;
-		}
-
-		char *env_args[envSize+2];
-
-		int size = 0;
-		while ((token = strtok_r(rest, ":", &rest))){
-			char * temp = calloc(strlen(token), 1);
-			temp = strdup(token);
-			env_args[size] = temp;
-			size++;			
-		}
-
-		env_args[envSize + 1] = NULL;
-
-		for(int i = 0; i < size; ++i){
-			fprintf(stderr, "%s \n", env_args[i]);
-		}
-
-
-		//If starts / run with absolute enviroment
-		//TODO:Remove if else
-		if(pipeline->argv[0][0] == comp[0]){
-			strncat(arg, pipeline->argv[0], strlen(arg)+strlen(pipeline->argv[0]));
-		}else{
-			//Else run with relative enviroment
-			//AKA add absolute path to command
-			char *bin = "/bin/";
-			strncat(arg, bin, strlen(arg)+strlen(bin));
-			strncat(arg, pipeline->argv[0], strlen(arg)+strlen(pipeline->argv[0]));
-		}
-
-		//Run command and check for failure
-
-		// fprintf(stderr, "arg:%s\n", arg);
-		// fprintf(stderr, ": %s\n", pipeline->argv[0]);
-		if(execvp(arg, pipeline->argv) == -1){
+		if(execvp(pipeline->argv[0], pipeline->argv) == -1){
 			perror("Error Occurred");
 			exit(1); //Exit child since execve failed
 		};
 	}
 	else {
 		//Get child process return value
-		int wstatus;
 		waitpid(-1, &wstatus, 0);
-		return_value = WEXITSTATUS(wstatus);
 	}
 	
-	return return_value;
-
+	return WEXITSTATUS(wstatus);
 }
 
 /**
