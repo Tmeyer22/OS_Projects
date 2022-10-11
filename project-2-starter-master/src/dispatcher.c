@@ -102,20 +102,24 @@ static int dispatch_external_command(struct command *pipeline)
 	 *
 	 * Good luck!
 	 */
-	int wstatus = 0;
 
-	if(fork() == 0){
-		if(execvp(pipeline->argv[0], pipeline->argv) == -1){
-			perror("Error Occurred");
-			exit(1); //Exit child since execve failed
-		};
-	}
-	else {
-		//Get child process return value
-		waitpid(-1, &wstatus, 0);
-	}
+	int wstatus = 0;
 	
-	return WEXITSTATUS(wstatus);
+	do{
+		wstatus= 0;
+		fprintf(stderr, "test\n", pipeline->argv[0]);
+		if(fork() == 0){
+			if(execvp(pipeline->argv[0], pipeline->argv) == -1){
+				perror("Error Occurred:");
+				exit(1); //Exit child since execve failed
+			};									
+		}else{
+			waitpid(-1, &wstatus, 0);
+		}
+		return WEXITSTATUS(wstatus);
+		pipeline = pipeline->pipe_to;
+	}while(pipeline->pipe_to != NULL);
+	return 1;
 }
 
 /**
