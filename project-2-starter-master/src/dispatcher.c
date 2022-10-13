@@ -105,18 +105,32 @@ static int dispatch_external_command(struct command *pipeline)
 
 	int wstatus = 0;
 	struct command *temp;
-	
+	int piper[2];
+
+
 	do{
 		wstatus= 0;
 		fprintf(stderr, "CMD: %s\n", pipeline->argv[0]);
+		pipe(piper);
 		if(fork() == 0){
+			close(piper[0]);
+			// if type[0] == r then return 0, otherwise return 1
+			dup2(0, piper[1]);
+			close(piper[1]);
 			if(execvp(pipeline->argv[0], pipeline->argv) == -1){
 				perror("Error Occurred:");
 				exit(1); //Exit child since execve failed
-			};									
+			};
 		}else{
 			waitpid(-1, &wstatus, 0);
 		}
+		char * buffer = calloc(256, sizeof(char));
+		fprintf(stderr, "pipeline[1]: anything\n");
+
+		read(piper[0], buffer, 4);
+
+		fprintf(stderr, "pipeline[1]: %s\n", buffer );
+		close(piper[1]);
 		temp = pipeline;
 		pipeline = pipeline->pipe_to;
 	}while(temp->pipe_to != NULL);
