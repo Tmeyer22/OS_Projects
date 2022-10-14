@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 //#include "helper.h" 
 #include "dispatcher.h"
@@ -115,7 +116,7 @@ static int dispatch_external_command(struct command *pipeline)
 		if(fork() == 0){
 			close(piper[0]);
 			// if type[0] == r then return 0, otherwise return 1
-			dup2(0, piper[1]);
+			dup2(piper[1], STDOUT_FILENO);
 			close(piper[1]);
 			if(execvp(pipeline->argv[0], pipeline->argv) == -1){
 				perror("Error Occurred:");
@@ -124,16 +125,52 @@ static int dispatch_external_command(struct command *pipeline)
 		}else{
 			waitpid(-1, &wstatus, 0);
 		}
-		char * buffer = calloc(256, sizeof(char));
-		fprintf(stderr, "pipeline[1]: anything\n");
-
-		read(piper[0], buffer, 4);
-
-		fprintf(stderr, "pipeline[1]: %s\n", buffer );
 		close(piper[1]);
+
+		char buffer[4096];
+		while (1) {
+			ssize_t count = read(piper[0], buffer, sizeof(buffer));
+			if (count == -1) {
+				if (errno == EINTR) {
+				continue;
+				} else {
+				perror("read");
+				exit(1);
+				}
+			} else if (count == 0) {
+				break;
+			}						 
+		}
+		close(piper[0]);
+		wait(0);
+
+		fprintf(stderr, "Buffer, %s\n", buffer);
+
 		temp = pipeline;
 		pipeline = pipeline->pipe_to;
+
+		int sz = 0;
+		while(pipeline->argv[sz] != NULL){
+			sz++;
+		}
+
+		pipeline->argv[sz] = buffer;
+		pipeline->argv[sz + 1] = NULL;
+		// sz++;
+
+		// char *Nargv[sz + 1];
+		// int sz2 = 0;
+		// while (sz2 < sz){
+		// 	Nargv[sz2] = pipeline->argv[sz2];
+		// 	sz2++;
+		// }
+		// Nargv[sz2+1] = buffer;
+		// Nargv[sz2+2] = NULL;
+		
+		fprintf(stderr, "Size: %d\n", sz);
+
 	}while(temp->pipe_to != NULL);
+	
 	return WEXITSTATUS(wstatus);
 }
 
