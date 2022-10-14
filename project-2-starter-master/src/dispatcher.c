@@ -33,59 +33,12 @@
 void noPipe(struct command *pipeline);
 void pipeIn(int piper[2], struct command *pipeline);
 void pipeOut(int piper[2], struct command *pipeline);
-void midPipe(struct command *pipeline);
+void midPipe(int piper[2], struct command *pipeline);
 
 
 
 static int dispatch_external_command(struct command *pipeline)
 {
-	//STORAGE FOR GARBAGE
-		//Declare refrences
-		// char *comp = "/";
-		// char *arg = calloc(strlen(pipeline->argv[0]), sizeof(char)); //TODO:Fix sizeof, returns size of point not of argv
-		//TODO: free memory, check mem with shell.debug
-
-		// char* path = getenv("PATH");
-		// char* token;
-    	// char* rest = path;
-
-		// int tracker = 0;
-		// int envSize = 0;
-		// while(tracker < strlen(path)){
-		// 	if(path[tracker] == ':'){
-		// 		envSize++;
-		// 	}
-		// 	tracker++;
-		// }
-
-		// char *env_args[envSize+2];
-
-		// int size = 0;
-		// while ((token = strtok_r(rest, ":", &rest))){
-		// 	char * temp = calloc(strlen(token), 1);
-		// 	temp = strdup(token);
-		// 	env_args[size] = temp;
-		// 	size++;			
-		// }
-
-		// env_args[envSize + 1] = NULL;
-
-		//If starts / run with absolute enviroment
-		//TODO:Remove if else
-		// if(pipeline->argv[0][0] == comp[0]){
-		// 	strncat(arg, pipeline->argv[0], strlen(arg)+strlen(pipeline->argv[0]));
-		// }else{
-		// 	//Else run with relative enviroment
-		// 	//AKA add absolute path to command
-		// 	char *bin = "/bin/";
-		// 	strncat(arg, bin, strlen(arg)+strlen(bin));
-		// 	strncat(arg, pipeline->argv[0], strlen(arg)+strlen(pipeline->argv[0]));
-		// }
-
-		//Run command and check for failure
-
-		//fprintf(stderr, "arg:%s\n", arg);
-		//fprintf(stderr, ":%s\n", pipeline->argv[0]);
 
 	/*
 	 * Note: this is where you'll start implementing the project.
@@ -134,29 +87,12 @@ static int dispatch_external_command(struct command *pipeline)
 			wstatus= 0;
 			fprintf(stderr, "CMD: %s\n", pipeline->argv[0]);
 
-			// char buffer[4096];
-			// while (1) {
-			// 	ssize_t count = read(piper[0], buffer, sizeof(buffer));
-			// 	if (count == -1) {
-			// 		if (errno == EINTR) {
-			// 		continue;
-			// 		} else {
-			// 		perror("read");
-			// 		exit(1);
-			// 		}
-			// 	} else if (count == 0) {
-			// 		break;
-			// 	}							 
-			// }
-			// close(piper[0]);
-			// wait(0);
-
-			// fprintf(stderr, "Buffer, %s\n", buffer);
-
 			temp = pipeline;
 			if(temp->pipe_to != NULL){
 				if(inPipe){
-					fprintf(stderr, "TODO: midpipe");
+					midPipe(piper, pipeline);
+					pipeline = pipeline->pipe_to;
+					continue;
 				}
 				pipeIn(piper, pipeline);
 				pipeline = pipeline->pipe_to;
@@ -164,27 +100,6 @@ static int dispatch_external_command(struct command *pipeline)
 			}else{
 				pipeOut(piper, pipeline);
 			}
-			
-
-			// int sz = 0;
-			// while(pipeline->argv[sz] != NULL){
-			// 	sz++;
-			// }
-
-			// pipeline->argv[sz] = buffer;
-			// pipeline->argv[sz + 1] = NULL;
-			// sz++;
-
-			// char *Nargv[sz + 1];
-			// int sz2 = 0;
-			// while (sz2 < sz){
-			// 	Nargv[sz2] = pipeline->argv[sz2];
-			// 	sz2++;
-			// }
-			// Nargv[sz2+1] = buffer;
-			// Nargv[sz2+2] = NULL;
-		
-			//fprintf(stderr, "Size: %d\n", sz);
 
 		}while(temp->pipe_to != NULL);
 
@@ -246,10 +161,21 @@ void pipeOut(int piper[2], struct command *pipeline){
 
 }
 
-void midPipe(struct command *pipeline){
+void midPipe(int piper[2], struct command *pipeline){
+	if(fork() == 0){
+		dup2(piper[0], STDIN_FILENO);
+		dup2(piper[1], STDOUT_FILENO);
+		close(piper[0]);
+		close(piper[1]);
+		if(execvp(pipeline->argv[0], pipeline->argv) == -1){
+			perror("Error Occurred:");
+			exit(1); //Exit child since execve failed
+		};
+	}else{
+		waitpid(-1, NULL, 0);
+	}
 
-
-
+	return;
 }
 
 
