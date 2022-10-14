@@ -114,6 +114,7 @@ static int dispatch_external_command(struct command *pipeline)
 
 	int wstatus = 0;
 	struct command *temp;
+	bool inPipe = false;
 	
 
 	
@@ -132,13 +133,6 @@ static int dispatch_external_command(struct command *pipeline)
 		do{
 			wstatus= 0;
 			fprintf(stderr, "CMD: %s\n", pipeline->argv[0]);
-
-			//piper[0] is read
-			//piper[1] is write
-			pipeIn(piper, pipeline);
-			pipeOut(piper, pipeline);
-
-
 
 			// char buffer[4096];
 			// while (1) {
@@ -161,7 +155,14 @@ static int dispatch_external_command(struct command *pipeline)
 
 			temp = pipeline;
 			if(temp->pipe_to != NULL){
+				if(inPipe){
+					fprintf(stderr, "TODO: midpipe");
+				}
+				pipeIn(piper, pipeline);
 				pipeline = pipeline->pipe_to;
+				inPipe = true;
+			}else{
+				pipeOut(piper, pipeline);
 			}
 			
 
