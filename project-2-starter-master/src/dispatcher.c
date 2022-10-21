@@ -78,9 +78,10 @@ static int dispatch_external_command(struct command *pipeline)
 			numPipes = numPipes + 2;
 			temp = temp->pipe_to;
 		}
-		fprintf(stderr, "%d\n", (numPipes/2)+1);
+		//Add sizing
    		int pipefds[numPipes];
 
+		//redo?
 		for( int i = 0; i < numPipes; i++ ){
 			if( pipe(pipefds + i*2) < 0 ){
 			perror("Error Occurred: pipeline failed");
@@ -91,20 +92,16 @@ static int dispatch_external_command(struct command *pipeline)
 		int commandc = 0;
 		temp = pipeline;
 		while( commandc < (numPipes/2)+1){
-			fprintf(stderr, "CMD: %s\n", pipeline->argv[0]);
+			//fprintf(stderr, "CMD: %s\n", pipeline->argv[0]);
 			int pid = fork();
 			if( pid == 0 ){
 				/* child gets input from the previous command,
 					if it's not the first command */
 
 				if( commandc > 0 ){
-					if(pipeline->input_file != NULL){
-						int piper[2];
-						if(pipe(piper) == -1){
-							perror("Error Occurred: pipeline failed");
-							exit(1);
-						}
-					}
+					// if(pipeline->input_filename != NULL){
+					// 	fprintf(stderr, "TODO: filein\n");
+					// }
 					if( dup2(pipefds[(commandc-1)*2], STDIN_FILENO) < 0){
 						perror("Error Occurred: pipeline failed");
 						exit(1);
@@ -119,6 +116,11 @@ static int dispatch_external_command(struct command *pipeline)
 						exit(1);
 					}
 				}
+				// else if( pipeline->output_type ==  COMMAND_OUTPUT_FILE_TRUNCATE) {
+				// 	fprintf(stderr, "TODO: filetrun");
+				// }else if( pipeline->output_type ==  COMMAND_OUTPUT_FILE_APPEND) {
+				// 	fprintf(stderr, "TODO: fileapp");
+				// }
 
 				for( int j = 0; j < numPipes; j++){
 					close(pipefds[j]);
@@ -129,11 +131,17 @@ static int dispatch_external_command(struct command *pipeline)
 					exit(1); //Exit child since execve failed
 				};
 			} else if( pid < 0 ){
-				perror("Error Occurred: fork: ");
+				perror("Error Occurred: fork ");
 				exit(1); //Exit child since execve failed
+			}
+			else{
+				//write ends
+				close(pipefds[commandc*2+1]);
+				waitpid(pid, NULL, 0);
 			}
 			commandc++;
 			pipeline = pipeline->pipe_to;
+			
 		}
 
 		// int piper[2];
@@ -166,7 +174,7 @@ static int dispatch_external_command(struct command *pipeline)
 		// close(piper[1]);
 	}
 
-	//fprintf(stderr, "\n");
+	fprintf(stderr, "TODO: status\n");
 	return WEXITSTATUS(wstatus);
 }
 
