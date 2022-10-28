@@ -29,24 +29,21 @@
  * pipeline.
  */
 
-//Our functions
-void noPipe(struct command *pipeline);
-void pipeIn(int piper[2], struct command *pipeline);
-void pipeOut(int piper[2], struct command *pipeline);
-void midPipe(int piper[2], struct command *pipeline);
-
-static int executeSubProcess(struct command *pipeline, int inPipe[], int usePipe){
+//Our function
+static int command(struct command *pipeline, int nextPipe[], bool inPipe){
 	
 	int outPipe[2];
+	int childName;
 
-	if (pipeline->output_type == 3){//open_pipe
+	if (pipeline->output_type == COMMAND_OUTPUT_PIPE){//open_pipe
 		if (pipe(outPipe) == -1) {
 			fprintf(stderr, "Pipe Failed\n");
 			return 1;
 		}
 	}
 
-	if (fork() == 0){
+	childName = fork();
+	if (childName == 0){
 
 		if (pipeline->input_filename != NULL){//file input
 			FILE *fin = fopen(pipeline->input_filename, "r");
@@ -60,13 +57,13 @@ static int executeSubProcess(struct command *pipeline, int inPipe[], int usePipe
 			}
 		}
 
-		if (usePipe == 1){//pipeline input
-			if (dup2(inPipe[0], STDIN_FILENO) == -1){
+		if (inPipe == true){//pipeline input
+			if (dup2(nextPipe[0], STDIN_FILENO) == -1){
 				fprintf(stderr, "dup failed\n");
 				exit (1);
 			}
-			close(inPipe[0]);
-			close(inPipe[1]);
+			close(nextPipe[0]);
+			close(nextPipe[1]);
 		}
 		
 		if (pipeline->output_type == 1){//File overwrite
@@ -107,29 +104,25 @@ static int executeSubProcess(struct command *pipeline, int inPipe[], int usePipe
 			exit(1);
 		}
 	}
-	if(usePipe){//close pipes if needed
-		close(inPipe[0]);
-		close(inPipe[1]);
+	if(inPipe){//close pipes if needed
+		close(nextPipe[0]);
+		close(nextPipe[1]);
 	}
 	
 
-	int * returnVal = (int *) malloc(sizeof(int));//wait for return
-	wait(returnVal);
-
-	if (*returnVal != 0){//error message or something
-		fprintf(stderr, "External command failed\n");
-		int returnThis = *returnVal;
-		free (returnVal);
-		return returnThis;
-	}
-
-	//free (returnVal);//memory?
+	int returnVal;//wait for return
+	waitpid(childName, &returnVal, 0);
 
 	if (pipeline->output_type == 3){//recursion
-		return (executeSubProcess(pipeline->pipe_to, outPipe, 1));
+		return (executeSubProcess(pipeline->pipe_to, outPipe, true));
 	}
 
-	return *returnVal;
+	if (WIFEXITED(returnVal) == 0 || WEXITSTATUS(returnVal) != 0){//error message or something
+		fprintf(stderr, "External command failed\n");
+		return 1;
+	}
+
+	return 0;
 }
 
 
@@ -161,163 +154,8 @@ static int dispatch_external_command(struct command *pipeline)
 	 *
 	 * Good luck!
 	 */
-
-	// int wstatus = 0;
-	// struct command *temp;
-	// int numPipes = 0;
-	
-	// if(pipeline->pipe_to == NULL){
-	// 	noPipe(pipeline);
-	// }
-	// else{
-	// 	temp = pipeline;
-	// 	while(temp->pipe_to != NULL){
-	// 		numPipes = numPipes + 2;
-	// 		temp = temp->pipe_to;
-	// 	}
-	// 	//Add sizing
-   	// 	int* pipefds = calloc(numPipes, sizeof(int));
-
-	// 	//redo?
-	// 	for( int i = 0; i < numPipes; i++ ){
-	// 		if( pipe(pipefds + i*2) < 0 ){
-	// 		perror("Error Occurred: pipeline failed");
-	// 		exit(1);
-	// 		}
-	// 	}
-
-	// 	int commandc = 0;
-	// 	temp = pipeline;
-	// 	while( commandc < (numPipes/2)+1){
-	// 		//fprintf(stderr, "CMD: %s\n", pipeline->argv[0]);
-	// 		int pid = fork();
-	// 		if( pid == 0 ){
-	// 			/* child gets input from the previous command,
-	// 				if it's not the first command */
-
-	// 			if( commandc > 0 ){
-	// 				// if(pipeline->input_filename != NULL){
-	// 				// 	fprintf(stderr, "TODO: filein\n");
-	// 				// }
-	// 				if( dup2(pipefds[(commandc-1)*2], STDIN_FILENO) < 0){
-	// 					perror("Error Occurred: pipeline failed");
-	// 					exit(1);
-	// 				}
-	// 			}
-	// 			/* child outputs to next command, if it's not
-	// 				the last command */
-	// 			if( pipeline->output_type ==  COMMAND_OUTPUT_PIPE){
-	// 				//fprintf(stderr, "O:%s\n", pipeline->argv[0]);
-	// 				if( dup2(pipefds[commandc*2+1], STDOUT_FILENO) < 0 ){
-	// 					perror("Error Occurred: pipeline failed");
-	// 					exit(1);
-	// 				}
-	// 			}
-	// 			// else if( pipeline->output_type ==  COMMAND_OUTPUT_FILE_TRUNCATE) {
-	// 			// 	fprintf(stderr, "TODO: filetrun");
-	// 			// }else if( pipeline->output_type ==  COMMAND_OUTPUT_FILE_APPEND) {
-	// 			// 	fprintf(stderr, "TODO: fileapp");
-	// 			// }
-
-	// 			for( int j = 0; j < numPipes; j++){
-	// 				close(pipefds[j]);
-	// 			}
-
-	// 			if(execvp(pipeline->argv[0], pipeline->argv) == -1){
-	// 				perror("Error Occurred: execvp: ");
-	// 				exit(1); //Exit child since execve failed
-	// 			};
-	// 		} else if( pid < 0 ){
-	// 			perror("Error Occurred: fork ");
-	// 			exit(1); //Exit child since execve failed
-	// 		}
-	// 		else{
-	// 			//write ends
-	// 			close(pipefds[commandc*2+1]);
-	// 			waitpid(pid, NULL, 0);
-	// 		}
-	// 		commandc++;
-	// 		pipeline = pipeline->pipe_to;
-			
-	// 	}
-	
-	// }
-
-	// fprintf(stderr, "TODO: status\n");
-	// return WEXITSTATUS(wstatus);
-	return executeSubProcess(pipeline, NULL, 0);
+	return executeSubProcess(pipeline, NULL, false);
 }
-
-
-void noPipe(struct command *pipeline){
-	if(fork() == 0){
-		if(execvp(pipeline->argv[0], pipeline->argv) == -1){
-			perror("Error Occurred:");
-			exit(1); //Exit child since execve failed
-		};
-	}else{
-		waitpid(-1, NULL, 0);
-	}
-
-	return;
-}
-
-void pipeIn(int piper[2], struct command *pipeline){
-	fprintf(stderr, "In\n");
-	if(fork() == 0){
-		// if type[0] == r then return 0, otherwise return 1
-		dup2(piper[1], 1);
-		//close(piper[0]);
-		close(piper[1]);
-		if(execvp(pipeline->argv[0], pipeline->argv) == -1){
-			perror("Error Occurred:");
-			exit(1); //Exit child since execve failed
-		};
-	}else{
-		waitpid(-1, NULL, 0);
-	}
-
-	return;
-}
-
-
-void pipeOut(int piper[2], struct command *pipeline){
-	fprintf(stderr, "Out\n");
-	if(fork() == 0){
-		// if type[0] == r then return 0, otherwise return 1
-		dup2(piper[0], 0);
-		//close(piper[1]);
-		close(piper[0]);
-		if(execvp(pipeline->argv[0], pipeline->argv) == -1){
-			perror("Error Occurred:");
-			exit(1); //Exit child since execve failed
-		};
-	}else{
-		waitpid(-1, NULL, 0);
-	}
-
-	return;
-
-}
-
-void midPipe(int piper[2], struct command *pipeline){
-	fprintf(stderr, "Mid\n");
-	if(fork() == 0){
-		dup2(piper[0], STDIN_FILENO);
-		dup2(piper[1], STDOUT_FILENO);
-		//close(piper[1]);
-		//close(piper[0]);
-		if(execvp(pipeline->argv[0], pipeline->argv) == -1){
-			perror("Error Occurred:");
-			exit(1); //Exit child since execve failed
-		};
-	}else{
-		waitpid(-1, NULL, 0);
-	}
-
-	return;
-}
-
 
 /**
  * dispatch_parsed_command() - run a command after it has been parsed
