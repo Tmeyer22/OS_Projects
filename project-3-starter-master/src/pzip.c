@@ -22,10 +22,47 @@
  * NOTE: All outputs are already allocated. DO NOT MALLOC or REASSIGN THEM !!!
  *
  */
+
+static int portionLength;
+
+pthread_barrier_t barrier;
+
+void *counter(void *tData);
+void *counter(void *tData)
+{
+	char *portion;
+	portion = (char *)tData;
+
+	fprintf(stderr, "adjusted array: ");
+	for (size_t i = 0; i < portionLength; i++) {
+		fprintf(stderr, "%c", portion[i]);
+	}
+	fprintf(stderr, "\n");
+
+	//after all local things have been calculated
+	pthread_barrier_wait(&barrier);
+
+	return portion;
+}
+
 void pzip(int n_threads, char *input_chars, int input_chars_size,
 	  struct zipped_char *zipped_chars, int *zipped_chars_count,
 	  int *char_frequency)
 {
-	printf ("TODO: Start from here!\n");
+	portionLength = input_chars_size / n_threads;
+
+	pthread_barrier_init(&barrier, NULL, n_threads + 1);
+
+	for (int i = 0; i < n_threads; i++) {
+		char *temp = input_chars + (i * portionLength);
+
+		pthread_t tid;
+
+		pthread_create(&tid, NULL, counter, (void *)temp);
+	}
+	pthread_barrier_wait(&barrier);
+
+	pthread_barrier_destroy(&barrier);
+
 	exit(1);
 }
