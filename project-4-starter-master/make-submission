@@ -5,7 +5,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 GREEN='\033[0;32m'
 
-make clean && make CC=clang >> compileErrors.txt
+make clean && make >> compileErrors.txt
 
 if [[ $? -ne 0 ]]; then
     echo -e "${RED}Code did not compile"
@@ -23,7 +23,7 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-zip -r $USER-submission -r Makefile include/ mains/ src/ measure.py 
+zip -r $USER-submission -r Makefile src/ 
 echo -e "${GREEN}Zip file successfully created"
 echo -e "${GREEN}Submit $USER-submission to gradescope for the coresponding deliverable"
 echo -e "${NC}"
