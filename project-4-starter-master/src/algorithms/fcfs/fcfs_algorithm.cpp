@@ -3,6 +3,7 @@
 #include <cassert>
 #include <stdexcept>
 
+#include <queue>
 #define FMT_HEADER_ONLY
 #include "utilities/fmt/format.h"
 
@@ -17,15 +18,32 @@ FCFSScheduler::FCFSScheduler(int slice) {
 }
 
 std::shared_ptr<SchedulingDecision> FCFSScheduler::get_next_thread() {
-        // TODO: implement me!
-        return nullptr;
+
+    std::shared_ptr<SchedulingDecision> tempDecision;
+    tempDecision = std::make_shared<SchedulingDecision>();
+
+    if(fcfsQueue.empty()){
+        tempDecision->explanation = "No threads available for scheduling.";
+        return tempDecision;
+    }
+
+    std::string numThreadsString;
+    numThreadsString = std::to_string(fcfsQueue.size());
+    std::string tempStr = "Selected from  threads. Will run to completion of burst.";
+
+    tempStr.insert(14, numThreadsString);
+
+    tempDecision->explanation = tempStr;
+    tempDecision->thread = fcfsQueue.front();
+    fcfsQueue.pop();
+
+    return tempDecision;
 }
 
 void FCFSScheduler::add_to_ready_queue(std::shared_ptr<Thread> thread) {
-        // TODO: implement me!
+        fcfsQueue.push(thread);
 }
 
 size_t FCFSScheduler::size() const {
-        // TODO: implement me!
-        return 0;
+        return fcfsQueue.size();
 }

@@ -2,7 +2,13 @@
 #include <iostream>
 
 #include "algorithms/fcfs/fcfs_algorithm.hpp"
-// TODO: Include your other algorithms as you make them
+#include "algorithms/spn/spn_algorithm.hpp"
+#include "algorithms/rr/rr_algorithm.hpp"
+#include "algorithms/priority/priority_algorithm.hpp"
+#include "algorithms/mlfq/mlfq_algorithm.hpp"
+
+
+
 
 #include "simulation/simulation.hpp"
 #include "types/enums.hpp"
@@ -14,9 +20,21 @@ Simulation::Simulation(FlagOptions flags) {
     if (flags.scheduler == "FCFS") {
         // Create a FCFS scheduling algorithm
         this->scheduler = std::make_shared<FCFSScheduler>();
+    }
+    else if (flags.scheduler == "SPN" ){
+        this->scheduler = std::make_shared<SPNScheduler>();
+    }
+    else if(flags.scheduler == "RR"){
+        this->scheduler = std::make_shared<RRScheduler>(flags.time_slice);
+    }
+    else if(flags.scheduler == "PRIORITY"){
+        this->scheduler = std::make_shared<PRIORITYScheduler>();
+    }
+    else if(flags.scheduler == "MLFQ"){
+        this->scheduler = std::make_shared<MFLQScheduler>(-1);
+    }
 
-    // TODO: Add your other algorithms as you make them
-    } else {
+     else {
         throw("No scheduler found for " + flags.scheduler);        
     }
     this->flags = flags;
@@ -206,6 +224,79 @@ void Simulation::handle_dispatcher_invoked(const std::shared_ptr<Event> event) {
 
 SystemStats Simulation::calculate_statistics() {
     // TODO: Calculate the system statistics
+    //iterate through the map of processes 
+    std::map<int, std::shared_ptr<Process>>::iterator processIterator;
+    for(processIterator = processes.begin(); processIterator != processes.end(); processIterator++){
+        //access current processes vector of threads
+        
+        //prioritys and enums: SYSTEM,INTERACTIVE, NORMAL, BATCH
+        if (processIterator->second->priority == SYSTEM)
+        {
+            system_stats.thread_counts[0] += processIterator->second->threads.size();
+        }
+        else if (processIterator->second->priority == INTERACTIVE)
+        {
+            system_stats.thread_counts[1] += processIterator->second->threads.size();
+        }
+        else if (processIterator->second->priority == NORMAL)
+        {
+            system_stats.thread_counts[2] += processIterator->second->threads.size();
+        }
+        else if (processIterator->second->priority == BATCH)
+        {
+            system_stats.thread_counts[3] += processIterator->second->threads.size();
+        }
+
+
+        for (size_t i = 0; i < processIterator->second->threads.size(); i++)
+        {
+            //ASSume dispatch and total time is calculated for you
+            //update the system stats object with times
+           // system_stats.total_time = processIterator->second->threads.at(i)->service_time + processIterator->second->threads.at(i)->io_time;
+
+            system_stats.service_time += processIterator->second->threads.at(i)->service_time;
+            system_stats.io_time += processIterator->second->threads.at(i)->io_time;
+
+            if (processIterator->second->priority == SYSTEM)
+            {
+                system_stats.avg_thread_response_times[0] += processIterator->second->threads.at(i)->response_time();
+                system_stats.avg_thread_turnaround_times[0] += processIterator->second->threads.at(i)->turnaround_time();
+            }
+            else if (processIterator->second->priority == INTERACTIVE)
+            {
+                system_stats.avg_thread_response_times[1] += processIterator->second->threads.at(i)->response_time();
+                system_stats.avg_thread_turnaround_times[1] += processIterator->second->threads.at(i)->turnaround_time();
+            }
+            else if (processIterator->second->priority == NORMAL)
+            {
+                system_stats.avg_thread_response_times[2] += processIterator->second->threads.at(i)->response_time();
+                system_stats.avg_thread_turnaround_times[2] += processIterator->second->threads.at(i)->turnaround_time();                
+            }
+            else if (processIterator->second->priority == BATCH)
+            {
+                system_stats.avg_thread_response_times[3] += processIterator->second->threads.at(i)->response_time();
+                system_stats.avg_thread_turnaround_times[3] += processIterator->second->threads.at(i)->turnaround_time();                
+            }
+
+        }
+        
+    }
+        system_stats.total_cpu_time += system_stats.service_time + system_stats.dispatch_time;
+        system_stats.total_idle_time = system_stats.total_time - system_stats.total_cpu_time;
+
+        system_stats.cpu_utilization = ((double)system_stats.total_cpu_time / system_stats.total_time) * 100.0;
+        system_stats.cpu_efficiency = ((double)system_stats.service_time / system_stats.total_time) * 100.0;
+
+        //Calculate the averages for each enum
+        for (int i = 0; i < 4; i++){
+            if(system_stats.thread_counts[i]){
+            system_stats.avg_thread_response_times[i] = system_stats.avg_thread_response_times[i] / system_stats.thread_counts[i];
+            system_stats.avg_thread_turnaround_times[i] = system_stats.avg_thread_turnaround_times[i] / system_stats.thread_counts[i];
+            }
+        }
+
+    
+
     return this->system_stats;
 }
 

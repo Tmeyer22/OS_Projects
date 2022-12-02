@@ -30,6 +30,13 @@ private:
 
         // TODO: Add any member variables you may need
 
+        std::queue<std::shared_ptr<Thread>> sysQueue;
+        std::queue<std::shared_ptr<Thread>> interactiveQueue;
+        std::queue<std::shared_ptr<Thread>> normQueue;
+        std::queue<std::shared_ptr<Thread>> batchQueue;
+
+
+
 public:
 
         //==================================================

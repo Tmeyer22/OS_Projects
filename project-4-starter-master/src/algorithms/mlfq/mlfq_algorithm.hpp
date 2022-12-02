@@ -26,6 +26,10 @@ public:
 
     // TODO: Add any member variables you may need.
 
+    std::map<ProcessPriority, std::string> priorityMap = {{SYSTEM, "SYSTEM"}, {INTERACTIVE, "INTERACTIVE"}, {NORMAL, "NORMAL"}, {BATCH, "BATCH"}};
+    Stable_Priority_Queue<std::shared_ptr<Thread>> milfQueue[10];
+
+
     //==================================================
     //  Member functions
     //==================================================

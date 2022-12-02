@@ -31,6 +31,10 @@ public:
     //  Member variables
     //==================================================
 
+    int prevQueue = 0;
+    int runTime = 0;
+
+
     /*
         thread_id:
             The thread's ID. These are only unique within the context of a process.

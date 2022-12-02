@@ -1,6 +1,7 @@
 #ifndef FCFS_ALGORITHM_HPP
 #define FCFS_ALGORITHM_HPP
 
+#include <queue>
 #include <memory>
 #include "algorithms/scheduling_algorithm.hpp"
 
@@ -22,6 +23,8 @@ public:
     //==================================================
 
     // TODO: Add any member variables you may need.
+
+    std::queue<std::shared_ptr<Thread>> fcfsQueue;
 
     //==================================================
     //  Member functions
