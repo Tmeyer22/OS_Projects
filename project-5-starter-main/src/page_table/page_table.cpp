@@ -10,18 +10,44 @@ using namespace std;
 
 
 size_t PageTable::get_present_page_count() const {
-    // TODO: implement me
-    return 0;
+
+    int numPages = 0;
+    for(int i = 0 ; i < rows.size(); i++){
+        if(rows.at(i).present){
+            numPages++;
+        }
+    }
+    return numPages;
 }
 
 
 size_t PageTable::get_oldest_page() const {
-    // TODO: implement me
-    return 0;
+    
+    int oldestTime = 100000;
+    int oldPage = 0;
+
+    for(int i = 0 ; i < rows.size(); i++){
+        if( rows.at(i).present && rows.at(i).loaded_at < oldestTime){
+            oldestTime = rows.at(i).loaded_at;
+            oldPage = i;
+        }
+    }
+
+    return oldPage;
 }
 
 
 size_t PageTable::get_least_recently_used_page() const {
-    // TODO: implement me
-    return 0;
+
+    int oldestTime = 100000;
+    int oldPage = 0;
+
+    for(int i = 0 ; i < rows.size(); i++){
+        if( rows.at(i).present && rows.at(i).last_accessed_at < oldestTime){
+            oldestTime = rows.at(i).last_accessed_at;
+            oldPage = i;
+        }
+    }
+
+    return oldPage;
 }

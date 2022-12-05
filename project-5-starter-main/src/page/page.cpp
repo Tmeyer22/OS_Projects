@@ -30,20 +30,23 @@ Page* Page::read_from_input(std::istream& in) {
 
 size_t Page::size() const
 {
-    // TODO
-    return 0;
+    return bytes.size();
 }
 
 
 bool Page::is_valid_offset(size_t offset) const
 {
-    // TODO
-    return false;
+    if(bytes.size() == 0 || bytes.size() <= offset){
+        return false;
+    }
+    return true;
 }
 
 
 char Page::get_byte_at_offset(size_t offset)
 {
-    // TODO
-    return false;
+    if(is_valid_offset(offset)){
+        return bytes.at(offset);
+    }
+    return false; 
 }

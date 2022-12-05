@@ -9,5 +9,12 @@
 using namespace std;
 
 void Frame::set_page(Process* process, size_t page_number) {
-    // TODO: implement me
+
+    this->process = process;
+    this->page_number = page_number; 
+
+    if (process->is_valid_page(page_number)){
+        contents = process->pages.at(page_number);
+    }
+    
 }

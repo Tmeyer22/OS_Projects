@@ -10,7 +10,12 @@ using namespace std;
 
 VirtualAddress VirtualAddress::from_string(int process_id, string address) {
     // TODO: implement me
-    return VirtualAddress(0, 0, 0);
+
+    const size_t OFFSET = bitset<32>().to_ulong();
+    const size_t OFFSET = bitset<32>("111010").to_ulong();
+
+
+    return VirtualAddress(process_id, 0, 0);
 }
 
 
