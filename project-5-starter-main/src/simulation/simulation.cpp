@@ -11,21 +11,29 @@
 Simulation::Simulation(FlagOptions& flags)
 {
     this->flags = flags;
-    this->frames.reserve(this->NUM_FRAMES);
+    this->frames.resize(this->NUM_FRAMES);
     
 }
 
 void Simulation::run() {
     // TODO: implement me
+    for (size_t i = 0; i < virtual_addresses.size(); i++)
+    {
+        perform_memory_access(virtual_addresses.at(i));
+    }
+    
 }
 
 char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
     // TODO: implement me
+
     return 0;
 }
 
 void Simulation::handle_page_fault(Process* process, size_t page) {
     // TODO: implement me
+    
+    
 }
 
 void Simulation::print_summary() {

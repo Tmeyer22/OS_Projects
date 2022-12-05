@@ -5,27 +5,38 @@
  */
 
 #include "virtual_address/virtual_address.h"
+#include <sstream>
 
 using namespace std;
 
 VirtualAddress VirtualAddress::from_string(int process_id, string address) {
-    // TODO: implement me
 
-    const size_t OFFSET = bitset<32>().to_ulong();
-    const size_t OFFSET = bitset<32>("111010").to_ulong();
-
-
-    return VirtualAddress(process_id, 0, 0);
+    const size_t frame = bitset<32>(address.substr(0,10)).to_ulong();
+    const size_t offset = bitset<32>(address.substr(10,6)).to_ulong();
+    
+    return VirtualAddress(process_id, frame, offset);
 }
 
 
 string VirtualAddress::to_string() const {
-    // TODO: implement me
-    return "";
+
+    stringstream mainString;
+
+    bitset<10> pageAddress(page);
+    bitset<6> offsetAddress(offset);
+    mainString << pageAddress << offsetAddress;
+
+    return mainString.str();
 }
 
 
 ostream& operator <<(ostream& out, const VirtualAddress& address) {
-    // TODO: implement me
+
+    bitset<10> pageAddress(address.page);
+    bitset<6> offsetAddress(address.offset);
+
+    //out << frameAddress << offsetAddress;
+    out << "PID " << address.process_id << " @ "<< pageAddress << offsetAddress << " [page: " << address.page << "; offset: " << address.offset << "]";
+    
     return out;
 }

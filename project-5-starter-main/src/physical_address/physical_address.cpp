@@ -25,6 +25,7 @@ string PhysicalAddress::to_string() const {
 
 
 ostream& operator <<(ostream& out, const PhysicalAddress& address) {
+    // TODO: implement me
 
     bitset<address.FRAME_BITS> frameAddress(address.frame);
     bitset<address.OFFSET_BITS> offsetAddress(address.offset);
