@@ -27,11 +27,56 @@ void Simulation::run() {
 char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
     // TODO: implement me
 
+    Process* temp = processes[virtual_address.process_id];
+
+    if (temp->is_valid_page(virtual_address.page))
+    {
+        bool didPageFault = true;
+        for (size_t i = 0; i < temp->page_table.rows.size(); i++)
+        {
+            size_t frameNum = temp->page_table.rows.at(i).frame;
+            if (temp->page_table.rows.at(i).present && frames.at(frameNum).page_number == frameNum)
+            {
+                didPageFault = false;
+                break;
+            }
+        }
+        
+        if (didPageFault){
+            handle_page_fault(temp, virtual_address.page);
+        }
+        
+        if (temp->pages[virtual_address.page]){
+            /* code */
+        }
+        
+        
+
+    }
+    
+
+
+
+    
+    virtual_address.page
+
+
     return 0;
 }
 
 void Simulation::handle_page_fault(Process* process, size_t page) {
     // TODO: implement me
+
+    if (flags.strategy == ReplacementStrategy::FIFO)
+    {
+        /* code */
+    }
+    else if (flags.strategy == ReplacementStrategy::LRU)
+    {
+        /* code */
+    }
+ 
+    
     
     
 }
