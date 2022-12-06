@@ -9,16 +9,17 @@
 #include <stdexcept>
 #include <sstream>
 
-Simulation::Simulation(FlagOptions& flags)
+Simulation::Simulation(FlagOptions &flags)
 {
     this->flags = flags;
     this->frames.reserve(this->NUM_FRAMES);
-    
 }
 
-void Simulation::run() {
+void Simulation::run()
+{
     // TODO: implement me
-    for(int i = 0; i < 512; i++){
+    for (int i = 0; i < 512; i++)
+    {
         free_frames.push_back(i);
     }
 
@@ -26,75 +27,81 @@ void Simulation::run() {
     {
         perform_memory_access(virtual_addresses.at(i));
     }
-    
 }
 
-char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
+char Simulation::perform_memory_access(const VirtualAddress &virtual_address)
+{
     // TODO: implement me
 
-    Process* temp = processes[virtual_address.process_id];
+    Process *temp = processes[virtual_address.process_id];
     size_t frameNum;
     if (temp->is_valid_page(virtual_address.page))
     {
-        bool didPageFault = true;
-        for (size_t i = 0; i < temp->page_table.rows.size(); i++)
+        bool didPageFault = false;
+        // for (size_t i = 0; i < temp->page_table.rows.size(); i++)
+        // {
+        //     frameNum = temp->page_table.rows.at(i).frame;
+        //     if (temp->page_table.rows.at(i).present && frames.at(frameNum).page_number == frameNum)
+        //     {
+        //         std::cout << "good";
+        //         didPageFault = false;
+        //         break;
+        //     }
+        // }
+
+        if (temp->page_table.rows.at(virtual_address.page).present == 0)
         {
-            frameNum = temp->page_table.rows.at(i).frame;
-            if (temp->page_table.rows.at(i).present && frames.at(frameNum).page_number == frameNum){
-                didPageFault = false;
-                break;
-            }
+            didPageFault = true;
         }
-        
 
         std::cout << virtual_address << "\n";
-        if (didPageFault){
+        if (didPageFault)
+        {
             handle_page_fault(temp, virtual_address.page);
             std::cout << "  -> PAGE FAULT\n";
         }
-        else{
+        else
+        {
             std::cout << "  -> IN MEMORY\n";
         }
+
+        frameNum = temp->page_table.rows.at(virtual_address.page).frame;
         PhysicalAddress physAddress(frameNum, virtual_address.offset);
 
         std::cout << "  -> physical address " << physAddress << "\n";
 
         std::cout << "  -> RSS: " << temp->get_rss() << "\n\n";
-        
 
         temp->page_table.rows.at(frameNum).last_accessed_at = stepTime;
         stepTime;
         return frames.at(frameNum).contents->get_byte_at_offset(virtual_address.offset);
-        
     }
-
 
     return 0;
 }
 
-void Simulation::handle_page_fault(Process* process, size_t page) {
+void Simulation::handle_page_fault(Process *process, size_t page)
+{
     // TODO: implement me
     page_faults++;
 
     if (process->get_rss() < flags.max_frames)
     {
         process->page_table.rows.at(page).present = 1;
-        
+
         int freeFrameNum = free_frames.front();
         free_frames.pop_front();
-        
+
         process->page_table.rows.at(page).loaded_at = stepTime;
         stepTime++;
 
         process->page_table.rows.at(page).frame = freeFrameNum;
-        
-        //Should this have New?
+
+        // Should this have New?
         Frame newFrame;
         newFrame.set_page(process, page);
-        std::cout << frames.size();
         frames.push_back(newFrame);
-
-    } 
+    }
     else if (flags.strategy == ReplacementStrategy::FIFO)
     {
 
@@ -103,7 +110,7 @@ void Simulation::handle_page_fault(Process* process, size_t page) {
         process->page_table.rows.at(page).present = 1;
         process->page_table.rows.at(page).loaded_at = stepTime;
         stepTime++;
-        
+
         frames.at(freeFrameNum).set_page(process, page);
     }
     else if (flags.strategy == ReplacementStrategy::LRU)
@@ -112,17 +119,18 @@ void Simulation::handle_page_fault(Process* process, size_t page) {
         process->page_table.rows.at(process->page_table.get_least_recently_used_page()).present = 0;
 
         process->page_table.rows.at(page).present = 1;
-                
+
         process->page_table.rows.at(page).loaded_at = stepTime;
         stepTime++;
-        
+
         frames.at(freeFrameNum).set_page(process, page);
     }
-    
 }
 
-void Simulation::print_summary() {
-    if (!this->flags.csv) {
+void Simulation::print_summary()
+{
+    if (!this->flags.csv)
+    {
         boost::format process_fmt(
             "Process %3d:  "
             "ACCESSES: %-6lu "
@@ -130,13 +138,9 @@ void Simulation::print_summary() {
             "FAULT RATE: %-8.2f "
             "RSS: %-6lu\n");
 
-        for (auto entry : this->processes) {
-            std::cout << process_fmt
-                % entry.first
-                % entry.second->memory_accesses
-                % entry.second->page_faults
-                % entry.second->get_fault_percent()
-                % entry.second->get_rss();
+        for (auto entry : this->processes)
+        {
+            std::cout << process_fmt % entry.first % entry.second->memory_accesses % entry.second->page_faults % entry.second->get_fault_percent() % entry.second->get_rss();
         }
 
         // Print statistics.
@@ -145,16 +149,11 @@ void Simulation::print_summary() {
             "%-25s %12lu\n"
             "%-25s %12lu\n");
 
-        std::cout << summary_fmt
-            % "Total memory accesses:"
-            % this->virtual_addresses.size()
-            % "Total page faults:"
-            % this->page_faults
-            % "Free frames remaining:"
-            % this->free_frames.size();
+        std::cout << summary_fmt % "Total memory accesses:" % this->virtual_addresses.size() % "Total page faults:" % this->page_faults % "Free frames remaining:" % this->free_frames.size();
     }
 
-    if (this->flags.csv) {
+    if (this->flags.csv)
+    {
         boost::format process_fmt(
             "%d,"
             "%lu,"
@@ -162,13 +161,9 @@ void Simulation::print_summary() {
             "%.2f,"
             "%lu\n");
 
-        for (auto entry : processes) {
-            std::cout << process_fmt
-                % entry.first
-                % entry.second->memory_accesses
-                % entry.second->page_faults
-                % entry.second->get_fault_percent()
-                % entry.second->get_rss();
+        for (auto entry : processes)
+        {
+            std::cout << process_fmt % entry.first % entry.second->memory_accesses % entry.second->page_faults % entry.second->get_fault_percent() % entry.second->get_rss();
         }
 
         // Print statistics.
@@ -177,18 +172,17 @@ void Simulation::print_summary() {
             "%lu,,,,\n"
             "%lu,,,,\n");
 
-        std::cout << summary_fmt
-            % this->virtual_addresses.size()
-            % this->page_faults
-            % this->free_frames.size();
+        std::cout << summary_fmt % this->virtual_addresses.size() % this->page_faults % this->free_frames.size();
     }
 }
 
-int Simulation::read_processes(std::istream& simulation_file) {
+int Simulation::read_processes(std::istream &simulation_file)
+{
     int num_processes;
     simulation_file >> num_processes;
 
-    for (int i = 0; i < num_processes; ++i) {
+    for (int i = 0; i < num_processes; ++i)
+    {
         int pid;
         std::string process_image_path;
 
@@ -196,7 +190,8 @@ int Simulation::read_processes(std::istream& simulation_file) {
 
         std::ifstream proc_img_file(process_image_path);
 
-        if (!proc_img_file) {
+        if (!proc_img_file)
+        {
             std::cerr << "Unable to read file for PID " << pid << ": " << process_image_path << std::endl;
             return 1;
         }
@@ -205,54 +200,68 @@ int Simulation::read_processes(std::istream& simulation_file) {
     return 0;
 }
 
-int Simulation::read_addresses(std::istream& simulation_file) {
+int Simulation::read_addresses(std::istream &simulation_file)
+{
     int pid;
     std::string virtual_address;
 
-    try {
-        while (simulation_file >> pid >> virtual_address) {
+    try
+    {
+        while (simulation_file >> pid >> virtual_address)
+        {
             this->virtual_addresses.push_back(VirtualAddress::from_string(pid, virtual_address));
         }
-    } catch (const std::exception& except) {
+    }
+    catch (const std::exception &except)
+    {
         std::cerr << "Error reading virtual addresses." << std::endl;
         std::cerr << except.what() << std::endl;
         return 1;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::cerr << "Error reading virtual addresses." << std::endl;
         return 1;
     }
     return 0;
 }
 
-int Simulation::read_simulation_file() {
+int Simulation::read_simulation_file()
+{
     std::ifstream simulation_file(this->flags.filename);
     // this->simulation_file.open(this->flags.filename);
 
-    if (!simulation_file) {
+    if (!simulation_file)
+    {
         std::cerr << "Unable to open file: " << this->flags.filename << std::endl;
         return -1;
     }
     int error = 0;
     error = this->read_processes(simulation_file);
 
-    if (error) {
+    if (error)
+    {
         std::cerr << "Error reading processes. Exit: " << error << std::endl;
         return error;
     }
 
     error = this->read_addresses(simulation_file);
 
-    if (error) {
+    if (error)
+    {
         std::cerr << "Error reading addresses." << std::endl;
         return error;
     }
 
-    if (this->flags.file_verbose) {
-        for (auto entry: this->processes) {
+    if (this->flags.file_verbose)
+    {
+        for (auto entry : this->processes)
+        {
             std::cout << "Process " << entry.first << ": Size: " << entry.second->size() << std::endl;
         }
 
-        for (auto entry : this->virtual_addresses) {
+        for (auto entry : this->virtual_addresses)
+        {
             std::cout << entry << std::endl;
         }
     }
