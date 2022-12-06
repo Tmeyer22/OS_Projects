@@ -72,6 +72,8 @@ public:
     // Member Variables
     //===================================
 
+    size_t stepTime = 0;
+
     /**
     * The maximum number of frames in the simulated system (512).
     */

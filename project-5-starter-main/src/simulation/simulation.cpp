@@ -7,16 +7,21 @@
 
 #include "simulation/simulation.h"
 #include <stdexcept>
+#include <sstream>
 
 Simulation::Simulation(FlagOptions& flags)
 {
     this->flags = flags;
-    this->frames.resize(this->NUM_FRAMES);
+    this->frames.reserve(this->NUM_FRAMES);
     
 }
 
 void Simulation::run() {
     // TODO: implement me
+    for(int i = 0; i < 512; i++){
+        free_frames.push_back(i);
+    }
+
     for (size_t i = 0; i < virtual_addresses.size(); i++)
     {
         perform_memory_access(virtual_addresses.at(i));
@@ -28,37 +33,40 @@ char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
     // TODO: implement me
 
     Process* temp = processes[virtual_address.process_id];
-
+    size_t frameNum;
     if (temp->is_valid_page(virtual_address.page))
     {
         bool didPageFault = true;
         for (size_t i = 0; i < temp->page_table.rows.size(); i++)
         {
-            size_t frameNum = temp->page_table.rows.at(i).frame;
-            if (temp->page_table.rows.at(i).present && frames.at(frameNum).page_number == frameNum)
-            {
+            frameNum = temp->page_table.rows.at(i).frame;
+            if (temp->page_table.rows.at(i).present && frames.at(frameNum).page_number == frameNum){
                 didPageFault = false;
                 break;
             }
         }
         
+
+        std::cout << virtual_address << "\n";
         if (didPageFault){
             handle_page_fault(temp, virtual_address.page);
+            std::cout << "  -> PAGE FAULT\n";
         }
-        
-        if (temp->pages[virtual_address.page]){
-            /* code */
+        else{
+            std::cout << "  -> IN MEMORY\n";
         }
-        
+        PhysicalAddress physAddress(frameNum, virtual_address.offset);
+
+        std::cout << "  -> physical address " << physAddress << "\n";
+
+        std::cout << "  -> RSS: " << temp->get_rss() << "\n\n";
         
 
+        temp->page_table.rows.at(frameNum).last_accessed_at = stepTime;
+        stepTime;
+        return frames.at(frameNum).contents->get_byte_at_offset(virtual_address.offset);
+        
     }
-    
-
-
-
-    
-    virtual_address.page
 
 
     return 0;
@@ -66,18 +74,50 @@ char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
 
 void Simulation::handle_page_fault(Process* process, size_t page) {
     // TODO: implement me
+    page_faults++;
 
-    if (flags.strategy == ReplacementStrategy::FIFO)
+    if (process->get_rss() < flags.max_frames)
     {
-        /* code */
+        process->page_table.rows.at(page).present = 1;
+        
+        int freeFrameNum = free_frames.front();
+        free_frames.pop_front();
+        
+        process->page_table.rows.at(page).loaded_at = stepTime;
+        stepTime++;
+
+        process->page_table.rows.at(page).frame = freeFrameNum;
+        
+        //Should this have New?
+        Frame newFrame;
+        newFrame.set_page(process, page);
+        std::cout << frames.size();
+        frames.push_back(newFrame);
+
+    } 
+    else if (flags.strategy == ReplacementStrategy::FIFO)
+    {
+
+        int freeFrameNum = process->page_table.rows.at(process->page_table.get_oldest_page()).frame;
+        process->page_table.rows.at(process->page_table.get_oldest_page()).present = 0;
+        process->page_table.rows.at(page).present = 1;
+        process->page_table.rows.at(page).loaded_at = stepTime;
+        stepTime++;
+        
+        frames.at(freeFrameNum).set_page(process, page);
     }
     else if (flags.strategy == ReplacementStrategy::LRU)
     {
-        /* code */
+        int freeFrameNum = process->page_table.rows.at(process->page_table.get_least_recently_used_page()).frame;
+        process->page_table.rows.at(process->page_table.get_least_recently_used_page()).present = 0;
+
+        process->page_table.rows.at(page).present = 1;
+                
+        process->page_table.rows.at(page).loaded_at = stepTime;
+        stepTime++;
+        
+        frames.at(freeFrameNum).set_page(process, page);
     }
- 
-    
-    
     
 }
 
