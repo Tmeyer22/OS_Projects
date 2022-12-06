@@ -84,7 +84,8 @@ char Simulation::perform_memory_access(const VirtualAddress &virtual_address)
         
         return frames.at(frameNum).contents->get_byte_at_offset(virtual_address.offset);
     }
-    else{
+    else
+    {
         std::cout << virtual_address << "\n";
         std::cout << "SEGFAULT - INVALID PAGE\n";
         return 0;
