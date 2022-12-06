@@ -18,15 +18,19 @@ Simulation::Simulation(FlagOptions &flags)
 void Simulation::run()
 {
     // TODO: implement me
-    for (int i = 0; i < 512; i++)
+    for (int i = 0; i < NUM_FRAMES; i++)
     {
         free_frames.push_back(i);
     }
 
     for (size_t i = 0; i < virtual_addresses.size(); i++)
     {
-        perform_memory_access(virtual_addresses.at(i));
+        if( 0 == perform_memory_access(virtual_addresses.at(i))){
+            return;
+        }
     }
+    print_summary();
+
 }
 
 char Simulation::perform_memory_access(const VirtualAddress &virtual_address)
@@ -37,17 +41,11 @@ char Simulation::perform_memory_access(const VirtualAddress &virtual_address)
     size_t frameNum;
     if (temp->is_valid_page(virtual_address.page))
     {
+
+
+
         bool didPageFault = false;
-        // for (size_t i = 0; i < temp->page_table.rows.size(); i++)
-        // {
-        //     frameNum = temp->page_table.rows.at(i).frame;
-        //     if (temp->page_table.rows.at(i).present && frames.at(frameNum).page_number == frameNum)
-        //     {
-        //         std::cout << "good";
-        //         didPageFault = false;
-        //         break;
-        //     }
-        // }
+
 
         if (temp->page_table.rows.at(virtual_address.page).present == 0)
         {
@@ -70,20 +68,40 @@ char Simulation::perform_memory_access(const VirtualAddress &virtual_address)
 
         std::cout << "     -> physical address " << physAddress << "\n";
 
+        // NEW CODE. THINK IT WILL BREAK
+        if (!temp->pages.at(virtual_address.page)->is_valid_offset(virtual_address.offset))
+        {
+            std::cout << "SEGFAULT - INVALID OFFSET\n";
+            return 0;
+        }
+
+
         std::cout << "     -> RSS: " << temp->get_rss() << "\n\n";
 
         temp->page_table.rows.at(frameNum).last_accessed_at = stepTime;
         stepTime;
+
+        temp->memory_accesses++;
+        
         return frames.at(frameNum).contents->get_byte_at_offset(virtual_address.offset);
     }
+    else{
+        std::cout << virtual_address << "\n";
+        std::cout << "SEGFAULT - INVALID PAGE\n";
+        return 0;
+    }
+    
 
     return 0;
 }
 
 void Simulation::handle_page_fault(Process *process, size_t page)
 {
-    // TODO: implement me
     page_faults++;
+    process->page_faults++;
+
+    //Populate the frame table when the process hasn't reached max frames it
+    // can have
 
     if (process->get_rss() < flags.max_frames)
     {
@@ -97,11 +115,11 @@ void Simulation::handle_page_fault(Process *process, size_t page)
 
         process->page_table.rows.at(page).frame = freeFrameNum;
 
-        // Should this have New?
         Frame newFrame;
         newFrame.set_page(process, page);
         frames.push_back(newFrame);
     }
+    //Starting replacing frames in the frame table when process hit its max
     else if (flags.strategy == ReplacementStrategy::FIFO)
     {
 
@@ -110,6 +128,9 @@ void Simulation::handle_page_fault(Process *process, size_t page)
         process->page_table.rows.at(page).present = 1;
         process->page_table.rows.at(page).loaded_at = stepTime;
         stepTime++;
+
+        //test code
+        process->page_table.rows.at(page).frame = freeFrameNum;
 
         frames.at(freeFrameNum).set_page(process, page);
     }
@@ -122,6 +143,9 @@ void Simulation::handle_page_fault(Process *process, size_t page)
 
         process->page_table.rows.at(page).loaded_at = stepTime;
         stepTime++;
+
+        //test code
+        process->page_table.rows.at(page).frame = freeFrameNum;
 
         frames.at(freeFrameNum).set_page(process, page);
     }

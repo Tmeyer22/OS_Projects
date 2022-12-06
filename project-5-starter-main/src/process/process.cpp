@@ -64,5 +64,6 @@ double Process::get_fault_percent() const
         return 0.0;
     }
 
-    return (double)page_faults/memory_accesses * 100;
+    double percentThing = (double)page_faults/(double)memory_accesses * 100;
+    return percentThing;
 }
