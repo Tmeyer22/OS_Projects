@@ -75,11 +75,10 @@ char Simulation::perform_memory_access(const VirtualAddress &virtual_address)
             return 0;
         }
 
-
         std::cout << "     -> RSS: " << temp->get_rss() << "\n\n";
 
-        temp->page_table.rows.at(frameNum).last_accessed_at = stepTime;
-        stepTime;
+        temp->page_table.rows.at(virtual_address.page).last_accessed_at = stepTime;
+        stepTime++;
 
         temp->memory_accesses++;
         
@@ -122,7 +121,6 @@ void Simulation::handle_page_fault(Process *process, size_t page)
     //Starting replacing frames in the frame table when process hit its max
     else if (flags.strategy == ReplacementStrategy::FIFO)
     {
-
         int freeFrameNum = process->page_table.rows.at(process->page_table.get_oldest_page()).frame;
         process->page_table.rows.at(process->page_table.get_oldest_page()).present = 0;
         process->page_table.rows.at(page).present = 1;
@@ -131,22 +129,18 @@ void Simulation::handle_page_fault(Process *process, size_t page)
 
         //test code
         process->page_table.rows.at(page).frame = freeFrameNum;
-
         frames.at(freeFrameNum).set_page(process, page);
     }
     else if (flags.strategy == ReplacementStrategy::LRU)
     {
         int freeFrameNum = process->page_table.rows.at(process->page_table.get_least_recently_used_page()).frame;
         process->page_table.rows.at(process->page_table.get_least_recently_used_page()).present = 0;
-
         process->page_table.rows.at(page).present = 1;
-
         process->page_table.rows.at(page).loaded_at = stepTime;
         stepTime++;
 
         //test code
         process->page_table.rows.at(page).frame = freeFrameNum;
-
         frames.at(freeFrameNum).set_page(process, page);
     }
 }
