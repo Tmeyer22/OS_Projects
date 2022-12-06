@@ -50,16 +50,16 @@ char Simulation::perform_memory_access(const VirtualAddress& virtual_address) {
         std::cout << virtual_address << "\n";
         if (didPageFault){
             handle_page_fault(temp, virtual_address.page);
-            std::cout << "  -> PAGE FAULT\n";
+            std::cout << "     -> PAGE FAULT\n";
         }
         else{
-            std::cout << "  -> IN MEMORY\n";
+            std::cout << "     -> IN MEMORY\n";
         }
         PhysicalAddress physAddress(frameNum, virtual_address.offset);
 
-        std::cout << "  -> physical address " << physAddress << "\n";
+        std::cout << "     -> physical address " << physAddress << "\n";
 
-        std::cout << "  -> RSS: " << temp->get_rss() << "\n\n";
+        std::cout << "     -> RSS: " << temp->get_rss() << "\n\n";
         
 
         temp->page_table.rows.at(frameNum).last_accessed_at = stepTime;
@@ -91,7 +91,6 @@ void Simulation::handle_page_fault(Process* process, size_t page) {
         //Should this have New?
         Frame newFrame;
         newFrame.set_page(process, page);
-        std::cout << frames.size();
         frames.push_back(newFrame);
 
     } 
